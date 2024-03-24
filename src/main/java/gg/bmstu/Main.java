@@ -1,5 +1,6 @@
 package gg.bmstu;
 
+import gg.bmstu.service.WebCrawler;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -55,8 +56,16 @@ public class Main {
 
     public static void main(String[] args) {
 //        System.out.println(parseStartDoc(GetUrl(url)));
-        parseStartDoc(GetUrl(url));
+//        parseStartDoc(GetUrl(url));
+        WebCrawler webCrawler = new WebCrawler("http://www.kremlin.ru/events/president/news");
+        try {
+            webCrawler.getThread().join();
+        }
+        catch (InterruptedException e){
+            e.printStackTrace();
+        }
     }
+
 
 
 }
