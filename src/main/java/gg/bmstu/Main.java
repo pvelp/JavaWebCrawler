@@ -1,69 +1,53 @@
 package gg.bmstu;
 
-import gg.bmstu.service.WebCrawler;
-import org.apache.http.HttpEntity;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import gg.bmstu.services.LinkPublisher;
+import gg.bmstu.services.PagePublisher;
+import gg.bmstu.services.RequestUtils;
 
 import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 
 
 public class Main {
 
-    private static final String url = "https://www.mk.ru/news/";
+    private static final String url = "http://www.kremlin.ru/events/president/news";
 
-    public static Document GetUrl(String url) {
-        int code = 0;
-        Document doc = null;
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            final HttpGet httpGet = new HttpGet(url);
-            try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
-                StatusLine statusLine = response.getStatusLine();
-                if (statusLine.getStatusCode() == 200) {
-                    System.out.println("Status: " + statusLine.getStatusCode() + " OK " + Thread.currentThread().getName());
-                    HttpEntity entity = response.getEntity();
-                    if (entity != null) {
-                        try {
-                            doc = Jsoup.parse(entity.getContent(), "UTF-8", url);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                } else {
-                    System.out.println("error get url" + url + " code " + code);
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return doc;
-    }
+    public static void main(String[] args) throws InterruptedException, IOException, TimeoutException {
 
-    static void parseStartDoc(Document doc){
-        var parentEl = doc.select(".news-listing__day-list");
-        System.out.println(parentEl);
-//        var testels = parentEl.select("li:nth-child(1)");
-//        for (var elArticle : testels){
-//            System.out.println(elArticle.getElementsByTag("h1").get(0).text());
-//        }
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost("127.0.0.1");
+        factory.setPort(5672);
+        factory.setVirtualHost("/");
+        factory.setUsername("rabbitmq");
+        factory.setPassword("rabbitmq");
 
-    }
+        Connection connection = factory.newConnection();
+        Channel channel = connection.createChannel();
+        channel.queueDeclare(RequestUtils.QUEUE_LINK, false, false, false, null);
+        channel.close();
+        connection.close();
 
-    public static void main(String[] args) {
-//        System.out.println(parseStartDoc(GetUrl(url)));
-//        parseStartDoc(GetUrl(url));
-        WebCrawler webCrawler = new WebCrawler("http://www.kremlin.ru/events/president/news");
-        try {
-            webCrawler.getThread().join();
-        }
-        catch (InterruptedException e){
-            e.printStackTrace();
-        }
+        LinkPublisher linkPublisher = new LinkPublisher(url, factory);
+        PagePublisher pagePublisher = new PagePublisher(factory);
+
+        linkPublisher.start();
+        pagePublisher.start();
+
+        linkPublisher.join();
+        pagePublisher.join();
+
+//        Thread t1 = new Thread(new LinkPublisher(url, factory));
+//        Thread t2 = new Thread(new PagePublisher(factory));
+
+//        t1.start();
+//        t2.start();
+//
+//        t1.join();
+//        t2.join();
+
     }
 
 

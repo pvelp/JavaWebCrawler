@@ -1,22 +1,33 @@
 package gg.bmstu.entity;
 
+import java.util.List;
 import java.util.UUID;
 
 
 public class NewsEntity {
     private UUID id;
     private String header;
-    private String body;
+    private String text;
+    private String summary;
     private String URL;
     private String date;
+    private String time;
+    private String place;
+    private List<String> themes;
+    private List<String> persons;
     private String author;
 
-    public NewsEntity(UUID id, String header, String body ,String URL, String date, String author){
-        this.id = id;
+    public NewsEntity(String header, String text, String summary, String URL, String date, String time, String place, List<String> themes, List<String> persons, String author) {
+        this.id = UUID.randomUUID();
         this.header = header;
-        this.body = body;
+        this.text = text;
+        this.summary = summary;
         this.URL = URL;
         this.date = date;
+        this.time = time;
+        this.place = place;
+        this.themes = themes;
+        this.persons = persons;
         this.author = author;
     }
 
@@ -36,12 +47,12 @@ public class NewsEntity {
         this.header = header;
     }
 
-    public String getBody() {
-        return body;
+    public String getText() {
+        return text;
     }
 
-    public void setBody(String body) {
-        this.body = body;
+    public void setText(String text) {
+        this.text = text;
     }
 
     public String getURL() {
@@ -69,14 +80,59 @@ public class NewsEntity {
     }
 
 
+    public String getTime() {
+        return time;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
+    }
+
+    public String getPlace() {
+        return place;
+    }
+
+    public void setPlace(String place) {
+        this.place = place;
+    }
+
+    public List<String> getThemes() {
+        return themes;
+    }
+
+    public void setThemes(List<String> themes) {
+        this.themes = themes;
+    }
+
+    public List<String> getPersons() {
+        return persons;
+    }
+
+    public void setPersons(List<String> persons) {
+        this.persons = persons;
+    }
+
+    public String getSummary() {
+        return summary;
+    }
+
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+
     @Override
     public String toString() {
         return "NewsEntity{" +
                 "id=" + id +
                 ", header='" + header + '\'' +
-                ", body='" + body + '\'' +
+                ", text='" + text + '\'' +
+                ", summary='" + summary + '\'' +
                 ", URL='" + URL + '\'' +
                 ", date='" + date + '\'' +
+                ", time='" + time + '\'' +
+                ", place='" + place + '\'' +
+                ", themes=" + themes +
+                ", persons=" + persons +
                 ", author='" + author + '\'' +
                 '}';
     }
