@@ -1,5 +1,7 @@
 package gg.bmstu.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -29,15 +31,16 @@ public class PagePublisher extends Thread {
         try {
             Connection connection = factory.newConnection();
             Channel channel = connection.createChannel();
+            ObjectMapper mapper = new ObjectMapper();
+
             while (true) {
                 synchronized (this) {
                     try {
                         if (channel.messageCount(RequestUtils.QUEUE_LINK) == 0) continue;
                         String url = new String(channel.basicGet(RequestUtils.QUEUE_LINK, true)
                                 .getBody(), StandardCharsets.UTF_8);
-                        if (url != null) {
-                            parse(url);
-                        }
+
+                        parse(url, mapper, channel);
                         notify();
                     } catch (IndexOutOfBoundsException e) {
                         wait();
@@ -49,8 +52,9 @@ public class PagePublisher extends Thread {
         }
     }
 
-    void parse(String url) {
+    void parse(String url, ObjectMapper mapper, Channel channel) {
         Optional<Document> doc = RequestUtils.request(url);
+        String jsonNewsEntity;
         if (doc.isPresent()) {
             Document realDoc = doc.get();
             String header = realDoc.select("h1.entry-title.p-name").first().text();
@@ -77,7 +81,6 @@ public class PagePublisher extends Thread {
                     persons.add(li.select("a").text());
                 }
             }
-
             NewsEntity newsEntity = new NewsEntity(
                     header,
                     text.toString(),
@@ -87,10 +90,17 @@ public class PagePublisher extends Thread {
                     time,
                     place,
                     themes,
-                    persons,
-                    ""
+                    persons
             );
-            System.out.println(newsEntity);
+
+            try {
+                jsonNewsEntity = mapper.writeValueAsString(newsEntity);
+                channel.basicPublish("", RequestUtils.QUEUE_PAGE, null, jsonNewsEntity.getBytes());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            System.out.println(jsonNewsEntity);
         }
     }
 

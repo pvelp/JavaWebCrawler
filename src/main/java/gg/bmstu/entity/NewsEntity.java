@@ -15,9 +15,8 @@ public class NewsEntity {
     private String place;
     private List<String> themes;
     private List<String> persons;
-    private String author;
 
-    public NewsEntity(String header, String text, String summary, String URL, String date, String time, String place, List<String> themes, List<String> persons, String author) {
+    public NewsEntity(String header, String text, String summary, String URL, String date, String time, String place, List<String> themes, List<String> persons) {
         this.id = UUID.randomUUID();
         this.header = header;
         this.text = text;
@@ -28,7 +27,6 @@ public class NewsEntity {
         this.place = place;
         this.themes = themes;
         this.persons = persons;
-        this.author = author;
     }
 
     public UUID getId() {
@@ -70,15 +68,6 @@ public class NewsEntity {
     public void setDate(String date) {
         this.date = date;
     }
-
-    public String getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(String author) {
-        this.author = author;
-    }
-
 
     public String getTime() {
         return time;
@@ -133,7 +122,6 @@ public class NewsEntity {
                 ", place='" + place + '\'' +
                 ", themes=" + themes +
                 ", persons=" + persons +
-                ", author='" + author + '\'' +
                 '}';
     }
 }

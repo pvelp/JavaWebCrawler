@@ -5,6 +5,7 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import gg.bmstu.services.LinkPublisher;
 import gg.bmstu.services.PagePublisher;
+import gg.bmstu.services.PageReciever;
 import gg.bmstu.services.RequestUtils;
 
 import java.io.IOException;
@@ -32,21 +33,15 @@ public class Main {
 
         LinkPublisher linkPublisher = new LinkPublisher(url, factory);
         PagePublisher pagePublisher = new PagePublisher(factory);
+        PageReciever pageReciever = new PageReciever(factory);
 
         linkPublisher.start();
         pagePublisher.start();
+        pageReciever.start();
 
         linkPublisher.join();
         pagePublisher.join();
-
-//        Thread t1 = new Thread(new LinkPublisher(url, factory));
-//        Thread t2 = new Thread(new PagePublisher(factory));
-
-//        t1.start();
-//        t2.start();
-//
-//        t1.join();
-//        t2.join();
+        pageReciever.join();
 
     }
 
