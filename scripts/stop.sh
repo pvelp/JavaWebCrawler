@@ -1,4 +1,4 @@
-cd ../Elasticsearch/docker-elk
-docker-compose -f docker-compose.yml down
+cd ../docker-elk7
+docker-compose -f docker-compose.elk7.yml down
 cd ../RabbitMQ
 docker-compose -f docker-compose.rmq.yml down
