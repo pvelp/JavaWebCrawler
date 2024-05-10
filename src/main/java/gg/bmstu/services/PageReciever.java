@@ -29,7 +29,7 @@ public class PageReciever extends Thread {
 
             Client client = new PreBuiltTransportClient(
                     Settings.builder().put("cluster.name", "docker-cluster").build())
-                    .addTransportAddress(new TransportAddress(InetAddress.getByName("localhost"), 9300));
+                    .addTransportAddress(new TransportAddress(InetAddress.getByName("localhost"), 9200));
 
             while (true) {
                     try {
