@@ -28,6 +28,7 @@ public class Main {
         Connection connection = factory.newConnection();
         Channel channel = connection.createChannel();
         channel.queueDeclare(RequestUtils.QUEUE_LINK, false, false, false, null);
+        channel.queueDeclare(RequestUtils.QUEUE_PAGE, false, false, false, null);
         channel.close();
         connection.close();
 
