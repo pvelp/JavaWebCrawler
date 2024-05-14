@@ -3,6 +3,8 @@ package gg.bmstu.services;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+import gg.bmstu.utils.RequestUtils;
+import gg.bmstu.entity.UrlEntity;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
@@ -24,7 +26,9 @@ public class LinkPublisher extends Thread {
         try {
             Connection connection = factory.newConnection();
             Channel channel = connection.createChannel();
+            System.out.println("Connected to LINK_QUEUE\n-Start crawl");
             crawl(link, channel);
+            System.out.println("Finish crawl");
             channel.close();
             connection.close();
         } catch (IOException | TimeoutException e) {
@@ -45,7 +49,10 @@ public class LinkPublisher extends Thread {
                         .not("a.tabs_article.item.big")) {
                     try {
                         String href = BASE_URL + a.attributes().get("href");
-                        channel.basicPublish("", RequestUtils.QUEUE_LINK, null, href.getBytes());
+                        String title = div.select("span.entry-title.p-name").text();
+                        UrlEntity urlEntity = new UrlEntity(href, title);
+                        channel.basicPublish("", RequestUtils.QUEUE_LINK, null,
+                                urlEntity.toJsonString().getBytes());
                     } catch (Exception e) {
                         System.out.println(e);
                     }

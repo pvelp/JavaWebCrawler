@@ -1,28 +1,29 @@
 package gg.bmstu.services;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+import gg.bmstu.utils.ElasticBridge;
+import gg.bmstu.utils.RequestUtils;
 import gg.bmstu.entity.NewsEntity;
+import gg.bmstu.entity.UrlEntity;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 public class PagePublisher extends Thread {
     private final ConnectionFactory factory;
-    private final int averageThemesCount = 2;
-    private final int averagePersonsCount = 2;
-
-    public PagePublisher(ConnectionFactory connectionFactory) {
+    private static final Logger logger = LoggerFactory.getLogger(PagePublisher.class);
+    private final ElasticBridge elasticBridge;
+    public PagePublisher(ConnectionFactory connectionFactory, ElasticBridge bridge) {
         factory = connectionFactory;
+        elasticBridge = bridge;
     }
 
 
@@ -31,16 +32,16 @@ public class PagePublisher extends Thread {
         try {
             Connection connection = factory.newConnection();
             Channel channel = connection.createChannel();
-            ObjectMapper mapper = new ObjectMapper();
-
+            System.out.println("Connected to PAGE_QUEUE\n-Start parse");
             while (true) {
                 synchronized (this) {
                     try {
                         if (channel.messageCount(RequestUtils.QUEUE_LINK) == 0) continue;
-                        String url = new String(channel.basicGet(RequestUtils.QUEUE_LINK, true)
+                        String jsonData = new String(channel.basicGet(RequestUtils.QUEUE_LINK, true)
                                 .getBody(), StandardCharsets.UTF_8);
-
-                        parse(url, mapper, channel);
+                        UrlEntity urlEntity = new UrlEntity();
+                        urlEntity.objectFromStrJson(jsonData);
+                        parse(urlEntity, channel);
                         notify();
                     } catch (IndexOutOfBoundsException e) {
                         wait();
@@ -52,15 +53,20 @@ public class PagePublisher extends Thread {
         }
     }
 
-    void parse(String url, ObjectMapper mapper, Channel channel) {
+    void parse(UrlEntity urlEntity, Channel channel) throws InterruptedException {
+//        Thread.sleep(1000);
+        if (elasticBridge.checkExistence(urlEntity.getHash())){
+            System.out.println("URL: " + urlEntity.getUrl() + " was founded in ES. Hash: " + urlEntity.getHash());
+            return;
+        }
+        String url = urlEntity.getUrl();
         Optional<Document> doc = RequestUtils.request(url);
-        String jsonNewsEntity;
         if (doc.isPresent()) {
             Document realDoc = doc.get();
             String header = realDoc.select("h1.entry-title.p-name").first().text();
             String summary = realDoc.select("div.read__lead.entry-summary.p-summary").first().text();
             String date = realDoc.select("time.read__published").text();
-            String time = realDoc.select("time.read__time").toString();
+            String time = realDoc.select("div.read__time").text();
             String place = realDoc.select("div.read__place.p-location").text();
 
             StringBuilder text = new StringBuilder();
@@ -69,18 +75,6 @@ public class PagePublisher extends Thread {
                 text.append(p.text()).append("\n");
             }
 
-            List<String> themes = new ArrayList<>(averagePersonsCount);
-            div = realDoc.select("div.read__tags.masha-ignore").first();
-            for (Element li : div.select("li.p-category")) {
-                themes.add(li.select("a").text());
-            }
-
-            List<String> persons = new ArrayList<>(averageThemesCount);
-            for (Element li : div.select("li")) {
-                if (li.attributes().get("href").contains("persons")) {
-                    persons.add(li.select("a").text());
-                }
-            }
             NewsEntity newsEntity = new NewsEntity(
                     header,
                     text.toString(),
@@ -89,19 +83,15 @@ public class PagePublisher extends Thread {
                     date,
                     time,
                     place,
-                    themes,
-                    persons
+                    urlEntity.getHash()
             );
-
             try {
-                jsonNewsEntity = mapper.writeValueAsString(newsEntity);
-                channel.basicPublish("", RequestUtils.QUEUE_PAGE, null, jsonNewsEntity.getBytes());
+                channel.basicPublish("", RequestUtils.QUEUE_PAGE, null, newsEntity.toJsonString().getBytes());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-
-            System.out.println(jsonNewsEntity);
         }
     }
 
 }
+

@@ -1,4 +1,4 @@
-package gg.bmstu.services;
+package gg.bmstu.utils;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -40,17 +40,20 @@ public class RequestUtils {
                             }
                             break;
                         }
-                        case 403: {
+                        case 403:
+                        case 429:
+                        {
                             System.out.println("[*] Thread " +
                                     Thread.currentThread().getId() +
                                     " - Error at " +
                                     url +
                                     " status code " +
                                     status_code);
-                            int delay = DELAY * tryIndex;
+                            int delay = DELAY * (tryIndex + 1);
                             try {
                                 response.close();
                                 httpClient.close();
+                                System.out.println("[!] sleep for " + delay / 1000 + "sec");
                                 Thread.sleep(delay);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
