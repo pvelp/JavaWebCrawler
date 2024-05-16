@@ -111,7 +111,7 @@ public class ElasticBridge {
                 .query("встреча")
         )._toQuery();
 
-        Query byAuthorTermQuery = new Query.Builder().term( t -> t
+        Query byAuthorTermQuery = new Query.Builder().term(t -> t
                 .field("place")
                 .value(v -> v.stringValue("Кремль"))
         ).build();
@@ -173,9 +173,9 @@ public class ElasticBridge {
         List<NewsEntity> mgetHits = new ArrayList<>();
 
         mgetHits.add(mgetResponse.docs().get(0).result().source());
-        for (NewsEntity newsEntity: mgetHits) {
+        for (NewsEntity newsEntity : mgetHits) {
             assert newsEntity != null;
-            logger.debug("Found headline. Place: " + newsEntity.getPlace() + " Summary: " + newsEntity.getSummary() +
+            logger.info("Found headline. Place: " + newsEntity.getPlace() + " Summary: " + newsEntity.getSummary() +
                     " URL: " + newsEntity.getURL() + " Header: " + newsEntity.getHeader());
         }
         System.out.println();
@@ -194,8 +194,7 @@ public class ElasticBridge {
                 NewsEntity.class
         );
 
-        logger.debug(String.valueOf(hAggregation));
-        System.out.println();
+        logger.info(String.valueOf(hAggregation));
 
         // Terms Aggregation
         Aggregation agg4 = Aggregation.of(a -> a.terms(t -> t
@@ -208,8 +207,7 @@ public class ElasticBridge {
                 NewsEntity.class
         );
 
-        logger.debug(String.valueOf(tAggregation));
-        System.out.println();
+        logger.info(String.valueOf(tAggregation));
 
         // Filter Aggregation
         Aggregation agg5_1 = Aggregation.of(a -> a
@@ -235,36 +233,33 @@ public class ElasticBridge {
                 NewsEntity.class
         );
 
-        logger.debug(String.valueOf(fAggregation));
+        logger.info(String.valueOf(fAggregation));
+
+//        Logs Aggregation
+        Aggregation agg6 = Aggregation.of(a -> a.terms(t -> t
+                        .field("stream.keyword")
+                        .size(10)
+                )
+        );
+        SearchResponse<?> lAggregation = elasticsearchClient.search(s -> s
+                        .index(INDEX_NAME)
+                        .aggregations("streams", agg6)
+                        .size(0),
+                NewsEntity.class
+        );
+
+        logger.debug(String.valueOf(lAggregation));
         System.out.println();
-
-        // Logs Aggregation
-//        Aggregation agg6 = Aggregation.of(a -> a.terms(t -> t
-//                        .field("stream.keyword")
-//                        .size(10)
-//                )
-//        );
-//        SearchResponse<?> lAggregation = elasticsearchClient.search(s -> s
-//                        .index(INDEX_NAME)
-//                        .aggregations("streams", agg6)
-//                        .size(0),
-//                NewsEntity.class
-//        );
-//
-//        logger.debug(String.valueOf(lAggregation));
-//        System.out.println();
     }
-
     private void outputHits(List<Hit<NewsEntity>> hits) {
         if (hits.isEmpty()) {
-            logger.debug("Empty response");
+            logger.info("Empty response");
         }
         for (Hit<NewsEntity> hit: hits) {
             NewsEntity newsEntity = hit.source();
             assert newsEntity != null;
-            logger.debug("Found headline. Place: " + newsEntity.getPlace() + " Summary: " + newsEntity.getSummary() +
+            logger.info("Found headline. Place: " + newsEntity.getPlace() + " Summary: " + newsEntity.getSummary() +
                     " URL: " + newsEntity.getURL() + " Header: " + newsEntity.getHeader());
         }
-        System.out.println();
     }
 }
