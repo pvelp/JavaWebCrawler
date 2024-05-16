@@ -255,7 +255,7 @@ public class ElasticBridge {
 //        System.out.println();
     }
 
-    private static void outputHits(List<Hit<NewsEntity>> hits) {
+    private void outputHits(List<Hit<NewsEntity>> hits) {
         if (hits.isEmpty()) {
             logger.debug("Empty response");
         }
