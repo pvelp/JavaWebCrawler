@@ -52,8 +52,7 @@ public class Main {
         pagePublisher.join();
         pageReciever.join();
 
-        elasticBridge.ExecuteSearchRequests();
-
+//        elasticBridge.ExecuteSearchRequests();
     }
 
 }

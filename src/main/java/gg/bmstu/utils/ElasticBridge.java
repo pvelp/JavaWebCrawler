@@ -174,9 +174,9 @@ public class ElasticBridge {
 
         mgetHits.add(mgetResponse.docs().get(0).result().source());
         for (NewsEntity newsEntity : mgetHits) {
-            assert newsEntity != null;
-            logger.info("Found headline. Place: " + newsEntity.getPlace() + " Summary: " + newsEntity.getSummary() +
-                    " URL: " + newsEntity.getURL() + " Header: " + newsEntity.getHeader());
+            if (newsEntity != null) {
+                logger.info("Found headline. URL: " + newsEntity.getURL() + " Header: " + newsEntity.getHeader());
+            }
         }
         System.out.println();
 

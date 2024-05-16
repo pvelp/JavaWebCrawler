@@ -153,3 +153,19 @@ POST /pages/_search
   }
 }
 ```
+
+### Logs Aggregation
+```
+GET /logstash*/_search
+{
+  "size": 0, 
+  "aggs": {
+    "streams": {
+      "terms": {
+        "field": "stream.keyword",
+        "size": 10
+      }
+    }
+  }
+}
+```
