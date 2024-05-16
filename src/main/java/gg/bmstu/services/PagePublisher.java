@@ -36,7 +36,7 @@ public class PagePublisher extends Thread {
                 try {
                     if (channel.messageCount(RequestUtils.QUEUE_LINK) == 0) continue;
 //                        GetResponse response = channel.basicGet(RequestUtils.QUEUE_LINK, true);
-                    channel.basicConsume(RequestUtils.QUEUE_LINK, false, "javaConsumerTag", new DefaultConsumer(channel) {
+                    channel.basicConsume(RequestUtils.QUEUE_LINK, false, "pagesTag", new DefaultConsumer(channel) {
                         @Override
                         public void handleDelivery(String consumerTag,
                                                    Envelope envelope,
