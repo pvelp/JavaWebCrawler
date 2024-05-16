@@ -1,8 +1,6 @@
 package gg.bmstu.services;
 
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.*;
 import gg.bmstu.utils.ElasticBridge;
 import gg.bmstu.utils.RequestUtils;
 import gg.bmstu.entity.NewsEntity;
@@ -32,23 +30,49 @@ public class PagePublisher extends Thread {
         try {
             Connection connection = factory.newConnection();
             Channel channel = connection.createChannel();
-            System.out.println("Connected to PAGE_QUEUE\n-Start parse");
+            logger.info("Connected to rabbit mq page queue for publish");
             while (true) {
-                synchronized (this) {
-                    try {
-                        if (channel.messageCount(RequestUtils.QUEUE_LINK) == 0) continue;
-                        String jsonData = new String(channel.basicGet(RequestUtils.QUEUE_LINK, true)
-                                .getBody(), StandardCharsets.UTF_8);
-                        UrlEntity urlEntity = new UrlEntity();
-                        urlEntity.objectFromStrJson(jsonData);
-                        parse(urlEntity, channel);
-                        notify();
-                    } catch (IndexOutOfBoundsException e) {
-                        wait();
-                    }
+//                synchronized (this) {
+                try {
+                    if (channel.messageCount(RequestUtils.QUEUE_LINK) == 0) continue;
+//                        GetResponse response = channel.basicGet(RequestUtils.QUEUE_LINK, true);
+                    channel.basicConsume(RequestUtils.QUEUE_LINK, false, "javaConsumerTag", new DefaultConsumer(channel) {
+                        @Override
+                        public void handleDelivery(String consumerTag,
+                                                   Envelope envelope,
+                                                   AMQP.BasicProperties properties,
+                                                   byte[] body)
+                                throws IOException {
+                            long deliveryTag = envelope.getDeliveryTag();
+                            String message = new String(body, StandardCharsets.UTF_8);
+                            UrlEntity urlEntity = new UrlEntity();
+                            urlEntity.objectFromStrJson(message);
+                            try {
+                                parse(urlEntity, channel);
+                            } catch (InterruptedException e) {
+                                logger.info(e.getMessage());
+                            }
+                            channel.basicAck(deliveryTag, false);
+                        }
+                    });
+
+//                        long devTag = response.getEnvelope().getDeliveryTag();
+//                        String jsonData = new String(response.getBody(), StandardCharsets.UTF_8);
+//                        UrlEntity urlEntity = new UrlEntity();
+//                        urlEntity.objectFromStrJson(jsonData);
+//                        parse(urlEntity, channel);
+//                        channel.basicAck(devTag, true);
+//                        notify();
+                } catch (IndexOutOfBoundsException e) {
+//                        wait();
+                    logger.info(e.getMessage());
                 }
+//                }
             }
-        } catch (IOException | TimeoutException | InterruptedException e) {
+//        } catch (IOException | TimeoutException | InterruptedException e) {
+//            throw new RuntimeException(e);
+//        }
+        } catch (IOException | TimeoutException e) {
             throw new RuntimeException(e);
         }
     }
@@ -56,7 +80,7 @@ public class PagePublisher extends Thread {
     void parse(UrlEntity urlEntity, Channel channel) throws InterruptedException {
 //        Thread.sleep(1000);
         if (elasticBridge.checkExistence(urlEntity.getHash())){
-            System.out.println("URL: " + urlEntity.getUrl() + " was founded in ES. Hash: " + urlEntity.getHash());
+            logger.info("[!] URL: " + urlEntity.getUrl() + " was founded in elastic. Hash: " + urlEntity.getHash());
             return;
         }
         String url = urlEntity.getUrl();
@@ -87,6 +111,7 @@ public class PagePublisher extends Thread {
             );
             try {
                 channel.basicPublish("", RequestUtils.QUEUE_PAGE, null, newsEntity.toJsonString().getBytes());
+                logger.info("Publish page in page queue");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

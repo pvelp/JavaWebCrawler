@@ -1,5 +1,6 @@
 package gg.bmstu.utils;
 
+import gg.bmstu.services.PagePublisher;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -7,6 +8,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -16,6 +19,7 @@ public class RequestUtils {
     private static final int TRYING_COUNT = 3;
     public static final String QUEUE_LINK = "crawler_link";
     public static final String QUEUE_PAGE = "crawler_page";
+    private static final Logger logger = LoggerFactory.getLogger(RequestUtils.class);
     public static Optional<Document> request(String url) {
         Optional<Document> doc = Optional.empty();
         for (int tryIndex = 0; tryIndex < TRYING_COUNT; tryIndex++) {
@@ -23,14 +27,13 @@ public class RequestUtils {
                 final HttpGet httpGet = new HttpGet(url);
                 try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
                     int status_code = response.getStatusLine().getStatusCode();
-                    System.out.println("Code " + status_code);
                     switch (status_code) {
                         case 200: {
                             HttpEntity entity = response.getEntity();
                             if (entity != null) {
                                 try {
                                     doc = Optional.ofNullable(Jsoup.parse(entity.getContent(), "UTF-8", url));
-                                    System.out.println("[*] Thread " +
+                                    logger.info("[*] Thread " +
                                             Thread.currentThread().getId() +
                                             " - Received Webpage from: " + url);
                                     return doc;
@@ -43,7 +46,7 @@ public class RequestUtils {
                         case 403:
                         case 429:
                         {
-                            System.out.println("[*] Thread " +
+                            logger.info("[*] Thread " +
                                     Thread.currentThread().getId() +
                                     " - Error at " +
                                     url +
@@ -53,7 +56,7 @@ public class RequestUtils {
                             try {
                                 response.close();
                                 httpClient.close();
-                                System.out.println("[!] sleep for " + delay / 1000 + "sec");
+                                logger.info("[!] sleep for " + delay / 1000 + "sec");
                                 Thread.sleep(delay);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
@@ -61,6 +64,9 @@ public class RequestUtils {
                             }
                             break;
                         }
+                        case 404:
+                            logger.info("[*] Thread " + Thread.currentThread().getId() + " - get 404 NOT FOUND for " + url);
+                            break;
                         default:
                             break;
                     }

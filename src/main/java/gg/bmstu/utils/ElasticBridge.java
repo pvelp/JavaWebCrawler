@@ -33,7 +33,7 @@ public class ElasticBridge {
                 new JacksonJsonpMapper(mapper));
         elasticsearchClient = new ElasticsearchClient(elasticsearchTransport);
         INDEX_NAME = indexName;
-        System.out.println("Elastic connection success!");
+        logger.info("Elastic connection success!");
     }
 
     public void createIndex() throws IOException {
@@ -59,7 +59,6 @@ public class ElasticBridge {
     public void insertData(NewsEntity newsEntity) {
         try {
             IndexResponse response = elasticsearchClient.index(i -> i.index(INDEX_NAME).document(newsEntity));
-            System.out.println("Page from: " + newsEntity.getURL() + " was added to elastic");
             logger.info("Page from: " + newsEntity.getURL() + " was added to elastic");
         } catch (IOException e) {
             logger.error("Error with inserting page to elastic from: " + newsEntity.getURL());

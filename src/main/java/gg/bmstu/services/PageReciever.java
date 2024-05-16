@@ -28,7 +28,7 @@ public class PageReciever extends Thread {
         try {
             Connection connection = factory.newConnection();
             Channel channel = connection.createChannel();
-            System.out.println("Connected to LINK_QUEUE\n-Start send to es");
+            logger.info("Connected to rabbit mq page queue for recieve");
             while (true) {
                 try {
                     if (channel.messageCount(RequestUtils.QUEUE_PAGE) == 0) continue;
@@ -38,8 +38,9 @@ public class PageReciever extends Thread {
                     newsEntity.objectFromStrJson(jsonNewsEntity);
                     if (!elasticBridge.checkExistence(newsEntity.getHash())) {
                         elasticBridge.insertData(newsEntity);
+                        logger.info("Insert data from " + newsEntity.getURL() + " in elastic");
                     } else {
-                        System.out.println("URL: " + newsEntity.getURL() + " was founded in ES. Hash: " + newsEntity.getHash());
+                        logger.info("[!] URL: " + newsEntity.getURL() + " was founded in elastic. Hash: " + newsEntity.getHash());
                     }
 
                 } catch (IndexOutOfBoundsException e) {

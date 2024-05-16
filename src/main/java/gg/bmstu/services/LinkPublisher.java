@@ -7,6 +7,8 @@ import gg.bmstu.utils.RequestUtils;
 import gg.bmstu.entity.UrlEntity;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -16,6 +18,7 @@ public class LinkPublisher extends Thread {
     private final String link;
     private final String BASE_URL = "http://www.kremlin.ru/";
     private final ConnectionFactory factory;
+    private static final Logger logger = LoggerFactory.getLogger(LinkPublisher.class);
     public LinkPublisher(String link, ConnectionFactory connectionFactory) {
         this.link = link;
         factory = connectionFactory;
@@ -26,9 +29,9 @@ public class LinkPublisher extends Thread {
         try {
             Connection connection = factory.newConnection();
             Channel channel = connection.createChannel();
-            System.out.println("Connected to LINK_QUEUE\n-Start crawl");
+            logger.info("Connected to rabbit mq link queue");
             crawl(link, channel);
-            System.out.println("Finish crawl");
+            logger.info("Finish crawl");
             channel.close();
             connection.close();
         } catch (IOException | TimeoutException e) {
@@ -37,6 +40,7 @@ public class LinkPublisher extends Thread {
     }
 
     private void crawl(String url, Channel channel) throws IOException {
+        logger.info("Start crawl " + url);
         Optional<Document> doc = RequestUtils.request(url);
         if (doc.isPresent()) {
             Document realDoc = doc.get();
@@ -55,6 +59,7 @@ public class LinkPublisher extends Thread {
                                 urlEntity.toJsonString().getBytes());
                     } catch (Exception e) {
                         System.out.println(e);
+                        logger.info(e.getMessage());
                     }
                 }
             }
