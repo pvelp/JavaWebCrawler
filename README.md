@@ -34,7 +34,7 @@ curl -XPUT -H "Content-Type: application/json" http://localhost:9200/_all/_setti
 ## Examples
 
 ### ElasticSearch
-![](/Users/toschakovpavel/Projects/Java/fetcher/pics/el.png)
+![](https://github.com/pvelp/JavaWebCrawler/blob/main/pics/el.png?raw=true)
 
 ### RabbitMQ
 ![](/Users/toschakovpavel/Projects/Java/fetcher/pics/rq1.png)
