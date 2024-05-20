@@ -111,7 +111,7 @@ public class ElasticBridge {
                 .query("встреча")
         )._toQuery();
 
-        Query byAuthorTermQuery = new Query.Builder().term(t -> t
+        Query byPlaceQuery = new Query.Builder().term(t -> t
                 .field("place")
                 .value(v -> v.stringValue("Кремль"))
         ).build();
