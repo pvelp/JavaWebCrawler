@@ -236,20 +236,19 @@ public class ElasticBridge {
         logger.info(String.valueOf(fAggregation));
 
 //        Logs Aggregation
-        Aggregation agg6 = Aggregation.of(a -> a.terms(t -> t
-                        .field("stream.keyword")
-                        .size(10)
-                )
-        );
-        SearchResponse<?> lAggregation = elasticsearchClient.search(s -> s
-                        .index(INDEX_NAME)
-                        .aggregations("streams", agg6)
-                        .size(0),
-                NewsEntity.class
-        );
-
-        logger.debug(String.valueOf(lAggregation));
-        System.out.println();
+//        Aggregation agg6 = Aggregation.of(a -> a.terms(t -> t
+//                        .field("stream.keyword")
+//                        .size(10)
+//                )
+//        );
+//        SearchResponse<?> lAggregation = elasticsearchClient.search(s -> s
+//                        .index(INDEX_NAME)
+//                        .aggregations("streams", agg6)
+//                        .size(0),
+//                NewsEntity.class
+//        );
+//
+//        logger.debug(String.valueOf(lAggregation));
     }
     private void outputHits(List<Hit<NewsEntity>> hits) {
         if (hits.isEmpty()) {

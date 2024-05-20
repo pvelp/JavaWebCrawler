@@ -121,7 +121,7 @@ POST /pages/_search
 POST /pages/_search
 {
   "aggs": {
-    "popular_authors": {
+    "popular_places": {
       "terms": {
         "field": "place"
       }
@@ -140,7 +140,7 @@ POST /pages/_search
         "term": {"place": "Пекин"}
       },
       "aggs": {
-        "avg_body_length": {
+        "avg_summary_length": {
           "avg": {
             "script": {
               "source": "doc['summary'].value.length()",
